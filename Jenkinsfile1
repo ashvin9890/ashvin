@@ -1,0 +1,22 @@
+pipeline {
+  agent any
+  stages {
+    stage('Git Clone') {
+      steps {
+        git credentialsId: 'GIT', url: 'git@github.com:ashvin9890/springboot-with-docker.git'
+      }
+    }
+    stage('build') {
+      steps {
+        echo "$USER"
+      }
+    }
+    stage("Docker Login"){
+              steps {
+            withCredentials([string(credentialsId: 'DOCKER_HUB_PASSWORD', variable: 'PASSWORD')]) {
+            sh 'docker login -u ashvin9890 -p ${PASSWORD}'
+            }
+      } 
+    }
+  }
+}
