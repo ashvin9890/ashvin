@@ -1,0 +1,60 @@
+pipeline {
+  agent any
+  stages {
+    stage('Git Clone') {
+      steps {
+        git credentialsId: 'GIT', url: 'git@github.com:ashvin9890/-k8s-jenkins-aws.git'
+      }
+    }
+          stage('user info') {
+      steps {
+        echo "$user"
+      }
+    }
+
+    stage("Docker build"){
+              steps {
+        sh 'docker version'
+        sh 'docker build -t jhooq-docker-demo .'
+        sh 'docker image list'
+        sh 'docker tag jhooq-docker-demo ashvin9890/k8s-jenkins-aws'
+    }
+    }
+    
+        stage("Docker Login"){
+              steps {
+            withCredentials([string(credentialsId: 'DOCKER_HUB_PASSWORD', variable: 'PASSWORD')]) {
+            sh 'docker login -u ashvin9890 -p ${PASSWORD}'
+    }
+    } 
+        }
+         stage("Push Image to Docker Hub"){
+         steps {
+        sh 'docker push ashvin9890/k8s-jenkins-aws'
+    }
+    }
+            stage('run kubectl') {
+              steps {
+              sh 'kubectl apply -f k8s-spring-boot-deployment.yml'
+    }
+    }
+        stage('Git Clone1') {
+        steps {
+    sh """ssh -tt root@akubernetes.paysquare.com << EOF 
+    kubectl get pod
+    kubectl apply -f /home/ubuntu/ashvin/ashvin.yaml 
+    exit
+    EOF"""
+    }
+    }
+            stage('Git Clone2') {
+        steps {
+    sh """ssh -tt root@akubernetes.paysquare.com << EOF 
+    kubectl get pod
+    kubectl delete -f /home/ubuntu/ashvin/ashvin.yaml 
+    exit
+    EOF"""
+    }
+    }
+        }
+}
